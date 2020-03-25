@@ -3,6 +3,7 @@
 
 
 library(leaflet)
+library(leaflet.extras)
 library(magrittr)
 library(dplyr)
 library(tidyr)
@@ -61,8 +62,9 @@ c = conf %>%
            State = State %>% replace_na('XX'))
 
 #   -  Analyze Daily Data
-#  -- Grouped  by label and Date --- --- --- --- --- -- -- -- -- -- -- >
+#  -- Grouped  by label and Date --- --- --- --- --- -- -- -- --- -- -- -- - -- -- -- >
 df1 = all_ts %>%
+    replace(is.na(.),0)%>%
     select(label, everything(),-Province.State,-Country.Region,-Lat,-Long) %>%
     group_by(label) %>%
     gather(key='Date', value='Count',X1.22.20:colnames(all_ts)[ncol(all_ts)]) %>%
@@ -72,7 +74,8 @@ df1 = all_ts %>%
                                    pattern = '\\.',replacement = '-')))) %>%
     group_by(Date, label) %>%
     summarise(Total = sum(Count)) %>%
-    spread(label, Total)  
+    spread(label, Total) %>%
+    select(Date,confirmed,recovered,dead)
 
 
 # ..Add button to reset map using setView.  
@@ -115,30 +118,34 @@ shinyServer(function(input, output) {
     })
     
     output$globalts <- renderPlot({
-        # ------------  ------  ---------- All TS Plot
+        # ------------  ------  ---------- All TS Plot  -------------------------------- ############>
+        # ------------  ------  ---------- **change deaths metric to area chart -------------- ############>
+        # ------------  ------  ----------   rearrange legend labels[done], ------------------- ############>
+        # ------------  ------  ----------   -------------------------------- ############>
+        # ------------  ------  ----------   -------------------------------- ############>
         ggplot(df1,aes(x=Date)) +
             geom_line(aes(y=confirmed, col="Confirmed")) +
             geom_point(aes(y=confirmed, col="Confirmed")) +
-            geom_label(data=df1[df1$Date==Sys.Date()-2,],
-                       label=comma(df1[df1$Date==Sys.Date()-2,]$confirmed),
-                       aes(y=df1[df1$Date==Sys.Date()-2,]$confirmed,
-                           col="Confirmed"),show.legend = F)+
-            geom_line(aes(y=dead, col="Dead")) +
-            geom_point(aes(y=dead, col="Dead")) +
-            geom_label(data=df1[df1$Date==Sys.Date()-2,],
-                       label=comma(df1[df1$Date==Sys.Date()-2,]$dead),
-                       aes(y=df1[df1$Date==Sys.Date()-2,]$dead,
-                           col="Dead"),show.legend = F)+
+            geom_label(data=df1[length(rownames(df1)),],
+                       label=comma(df1[length(rownames(df1)),]$confirmed),
+                       aes(y=df1[length(rownames(df1)),]$confirmed,
+                           col="Confirmed",size = 15),show.legend = F)+
             geom_line(aes(y=recovered, col="Recovered")) +
             geom_point(aes(y=recovered, col="Recovered")) +
-            geom_label(data=df1[df1$Date==Sys.Date()-2,],
-                       label=comma(df1[df1$Date==Sys.Date()-2,]$recovered),
-                       aes(y=df1[df1$Date==Sys.Date()-2,]$recovered,
-                           col="Recovered"),show.legend = F)+
+            geom_label(data=df1[length(rownames(df1)),],
+                       label=comma(df1[length(rownames(df1)),]$recovered),
+                       aes(y=df1[length(rownames(df1)),]$recovered,
+                           col="Recovered",size = 15),show.legend = F)+
+            geom_line(aes(y=dead, col="Dead")) +
+            geom_point(aes(y=dead, col="Dead")) +
+            geom_label(data=df1[length(rownames(df1)),],
+                       label=comma(df1[length(rownames(df1)),]$dead),
+                       aes(y=df1[length(rownames(df1)),]$dead,
+                           col="Dead",size = 15),show.legend = F)+
             ggtitle("Corona Virus Cases Globally") +
             scale_x_date(breaks = unique(df1$Date)) +
             scale_y_continuous(label = comma) +
-            theme(plot.title = element_text(size=25,face = "bold",hjust = 0.5),
+            theme(plot.title = element_text(size=25,hjust = 0.5),
                   axis.title = element_text(size=10,face = "bold"),
                   axis.title.y = element_blank(),
                   axis.text.x = element_text(size = 9,face = "bold", angle = 90, hjust = 1),
@@ -146,9 +153,11 @@ shinyServer(function(input, output) {
                   panel.background = element_rect(fill = "white"),
                   strip.background = element_rect(fill = "white"),
                   panel.grid.major = element_line(colour = "gray",size = .10),
-                  legend.position = "bottom",
+                  legend.position = c(0.375, 0.385),
                   legend.background = element_rect(fill=alpha('white', 0.2)),
-                  legend.title = element_blank())
+                  legend.box = "horizontal",
+                  legend.title = element_blank(),
+                  legend.text = element_text(size=15))
         
     })
     

@@ -29,6 +29,8 @@ a("data source: JHU CSSE COVID-19 DATA",href="https://github.com/CSSEGISandData/
 paste(' | '),
 a("author: neil kutty", href="http:/twitter.com/neilkutty"),
 paste(' | '),
-paste('Data Updated as of: ',Sys.Date()-2)           
+paste('Data Updated as of: ',Sys.Date()-2),
+paste(' | '),
+a("Code", href="https://github.com/neilkutty/COVID19")
            
 ))
