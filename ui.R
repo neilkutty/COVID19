@@ -10,7 +10,8 @@ br(),
 
            fluidRow(plotOutput("globalts")),
            
-           fluidRow(leafletOutput("mymap")),
+           fluidRow(column(width=9,leafletOutput("mymap",height = 600)),
+                    column(width=3,plotOutput("countries", height = 600))),
            
            
           
